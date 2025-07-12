@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stone Paper Scissors Game</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 50px;
+    }
+    .bu {
+      padding: 10px 20px;
+      font-size: 25px;
+      margin: 10px;
+      cursor: pointer;
+      border-radius: 30px;
+      border: 2px solid black;
+      color: white;
+      background-color: #000;
+      width: 150px;
+      height: 100px;
+      transition: all 0.3s ease;
+    }
+    .myButton:hover {
+      background-color: #25abcc;
+    }
+    .activeButton {
+      background-color: #714747 !important;
+    }
+    #result {
+      font-size: 40px;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Stone Paper Scissors</h1>
+
+  <div>
+    <button id="r" class="bu compButton"><i class="bi bi-circle-fill"></i></button>
+    <button id="p" class="bu compButton"><i class="bi bi-envelope-paper-fill"></i></button>
+    <button id="s" class="bu compButton"><i class="bi bi-scissors"></i></button>
+  </div>
+
+  <div>
+    <button id="x" class="bu myButton"><i class="bi bi-circle-fill"></i></button>
+    <button id="y" class="bu myButton"><i class="bi bi-envelope-paper-fill"></i></button>
+    <button id="z" class="bu myButton"><i class="bi bi-scissors"></i></button>
+  </div>
+
+  <h1 id="result"></h1>
+
+  <script>
+    const myButtons = document.getElementsByClassName("myButton"); 
+    const compButtons = document.getElementsByClassName("compButton");
+
+       for (let i = 0; i < myButtons.length; i++) {
+      myButtons[i].addEventListener("click", function () {
+        for (let j = 0; j < myButtons.length; j++) {
+          myButtons[j].classList.remove("activeButton");
+        }
+        myButtons[i].classList.add("activeButton");
+
+        const randomIndex = Math.floor(Math.random() * 3);
+        for (let j = 0; j < compButtons.length; j++) {
+          compButtons[j].classList.remove("activeButton");
+        }
+        compButtons[randomIndex].classList.add("activeButton");
+
+        const playerId = myButtons[i].id;
+        let playerMove = "";
+        if (playerId == "x") playerMove = "stone";
+        else if (playerId == "y") playerMove = "paper";
+        else if (playerId == "z") playerMove = "scissor";
+
+        const compId = compButtons[randomIndex].id;
+        let compMove = "";
+        if (compId == "r") compMove = "stone";
+        else if (compId == "p") compMove = "paper";
+        else if (compId == "s") compMove = "scissor";
+
+        let result = "";
+        if (playerMove == compMove) {
+          result = "Draw";
+        } else if (
+          (playerMove == "stone" && compMove == "scissor") ||
+          (playerMove == "paper" && compMove == "stone") ||
+          (playerMove == "scissor" && compMove == "paper")
+        ) {
+          result = "You Win!";
+        } else {
+          result = "You Lose!";
+        }
+
+        document.getElementById("result").innerText = result;
+      });
+    }
+    
+  </script>
+</body>
+</html>
