@@ -15,7 +15,7 @@
     }
 
     h1 {
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
 
     .button-container {
@@ -64,8 +64,25 @@
 
     #result {
       font-size: 40px;
-      margin-top: 30px;
+      margin-top: 20px;
       color: #333;
+    }
+
+    #timer {
+      font-size: 28px;
+      color: #e91e63;
+      margin-bottom: 10px;
+    }
+
+    #scoreboard {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    #game-over {
+      color: green;
+      font-size: 28px;
+      margin-top: 15px;
     }
 
     @media (max-width: 768px) {
@@ -77,6 +94,10 @@
 
       #result {
         font-size: 32px;
+      }
+
+      #scoreboard {
+        font-size: 20px;
       }
     }
 
@@ -100,6 +121,9 @@
 <body>
   <h1>Stone Paper Scissors</h1>
 
+  <div id="scoreboard">Player: 0 | Computer: 0</div>
+  <div id="timer"></div>
+
   <div class="button-container">
     <button id="r" class="bu compButton"><i class="bi bi-circle-fill"></i></button>
     <button id="p" class="bu compButton"><i class="bi bi-envelope-paper-fill"></i></button>
@@ -113,51 +137,72 @@
   </div>
 
   <h1 id="result"></h1>
-  <h1>Thank You Play Again!</h1>
+  <h2 id="game-over"></h2>
 
   <script>
     const myButtons = document.getElementsByClassName("myButton"); 
     const compButtons = document.getElementsByClassName("compButton");
+    let playerScore = 0;
+    let compScore = 0;
+
+    function updateScore() {
+      document.getElementById("scoreboard").innerText = `Player: ${playerScore} | Computer: ${compScore}`;
+    }
+
+    function resetGame() {
+      playerScore = 0;
+      compScore = 0;
+      updateScore();
+      document.getElementById("game-over").innerText = "";
+      document.getElementById("result").innerText = "";
+    }
+
+    function endGame(winner) {
+      document.getElementById("game-over").innerText = `${winner} won the Best of 5!`;
+      setTimeout(resetGame, 4000); // Auto reset after 4 seconds
+    }
 
     for (let i = 0; i < myButtons.length; i++) {
       myButtons[i].addEventListener("click", function () {
+        // Clear previous highlights
         for (let j = 0; j < myButtons.length; j++) {
           myButtons[j].classList.remove("activeButton");
         }
-        myButtons[i].classList.add("activeButton");
-
-        const randomIndex = Math.floor(Math.random() * 3);
         for (let j = 0; j < compButtons.length; j++) {
           compButtons[j].classList.remove("activeButton");
         }
-        compButtons[randomIndex].classList.add("activeButton");
+
+        myButtons[i].classList.add("activeButton");
 
         const playerId = myButtons[i].id;
-        let playerMove = "";
-        if (playerId == "x") playerMove = "stone";
-        else if (playerId == "y") playerMove = "paper";
-        else if (playerId == "z") playerMove = "scissor";
+        let playerMove = playerId === "x" ? "stone" : playerId === "y" ? "paper" : "scissor";
+
+        const randomIndex = Math.floor(Math.random() * 3);
+        compButtons[randomIndex].classList.add("activeButton");
 
         const compId = compButtons[randomIndex].id;
-        let compMove = "";
-        if (compId == "r") compMove = "stone";
-        else if (compId == "p") compMove = "paper";
-        else if (compId == "s") compMove = "scissor";
+        let compMove = compId === "r" ? "stone" : compId === "p" ? "paper" : "scissor";
 
         let result = "";
-        if (playerMove == compMove) {
+        if (playerMove === compMove) {
           result = "Draw";
         } else if (
-          (playerMove == "stone" && compMove == "scissor") ||
-          (playerMove == "paper" && compMove == "stone") ||
-          (playerMove == "scissor" && compMove == "paper")
+          (playerMove === "stone" && compMove === "scissor") ||
+          (playerMove === "paper" && compMove === "stone") ||
+          (playerMove === "scissor" && compMove === "paper")
         ) {
           result = "You Win!";
+          playerScore++;
         } else {
           result = "You Lose!";
+          compScore++;
         }
 
         document.getElementById("result").innerText = result;
+        updateScore();
+
+        if (playerScore === 3) endGame("Player");
+        else if (compScore === 3) endGame("Computer");
       });
     }
   </script>
