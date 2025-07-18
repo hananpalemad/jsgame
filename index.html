@@ -52,6 +52,8 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
     }
 
     .myButton:hover {
@@ -60,6 +62,37 @@
 
     .activeButton {
       background-color: #714747 !important;
+    }
+
+    .computerSelecting {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .computerSelecting::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 105, 180, 0.7),
+        transparent
+      );
+      animation: runningShadow 0.8s linear infinite;
+      z-index: 1;
+    }
+
+    @keyframes runningShadow {
+      0% {
+        transform: translateX(-100%) skewX(-20deg);
+      }
+      100% {
+        transform: translateX(100%) skewX(-20deg);
+      }
     }
 
     #result {
@@ -99,7 +132,7 @@
 
     /* Custom Popup Styles */
     #customPopup {
-      display: none; /* FIXED: was incorrectly set to display: flex */
+      display: none;
       position: fixed;
       top: 0;
       left: 0;
@@ -209,6 +242,10 @@
     let playerScore = 0;
     let compScore = 0;
     let gameEnded = false;
+    let roundsPlayed = 0;
+    const maxRounds = 5;
+    let computerSelectionInterval;
+    let currentHoverIndex = 0;
 
     function updateScore() {
       const scoreEl = document.getElementById("scoreboard");
@@ -221,15 +258,28 @@
       playerScore = 0;
       compScore = 0;
       gameEnded = false;
+      roundsPlayed = 0;
       updateScore();
       document.getElementById("game-over").innerText = "";
       document.getElementById("result").innerText = "";
-      [...myButtons, ...compButtons].forEach(btn => btn.classList.remove("activeButton"));
+      [...myButtons, ...compButtons].forEach(btn => {
+        btn.classList.remove("activeButton");
+        btn.classList.remove("computerSelecting");
+      });
+      clearInterval(computerSelectionInterval);
     }
 
-    function endGame(winner) {
+    function endGame() {
       gameEnded = true;
-      setTimeout(() => showPopup(`${winner} won the Best of 5!`), 100);
+      let winner;
+      if (playerScore > compScore) {
+        winner = "You";
+      } else if (compScore > playerScore) {
+        winner = "Computer";
+      } else {
+        winner = "No one - it's a tie!";
+      }
+      setTimeout(() => showPopup(`Game Over! ${winner} wins the match!`), 100);
     }
 
     function showPopup(message) {
@@ -242,15 +292,43 @@
       resetGame();
     }
 
-    function playGame(playerMoveIndex, playerMove) {
+    function startComputerSelection() {
+      [...compButtons].forEach(btn => btn.classList.remove("computerSelecting"));
+      currentHoverIndex = 0;
+      
+      computerSelectionInterval = setInterval(() => {
+        [...compButtons].forEach(btn => btn.classList.remove("computerSelecting"));
+        compButtons[currentHoverIndex].classList.add("computerSelecting");
+        currentHoverIndex = (currentHoverIndex + 1) % compButtons.length;
+      }, 300);
+    }
+
+    function stopComputerSelection() {
+      clearInterval(computerSelectionInterval);
+      [...compButtons].forEach(btn => btn.classList.remove("computerSelecting"));
+    }
+
+    async function playGame(playerMoveIndex, playerMove) {
       if (gameEnded) return;
 
+      // Clear previous selections
+      [...myButtons, ...compButtons].forEach(btn => btn.classList.remove("activeButton"));
+      document.getElementById("result").innerText = "";
+
+      // Show player's selection
+      myButtons[playerMoveIndex].classList.add("activeButton");
+
+      // Start computer selection animation
+      startComputerSelection();
+
+      // Wait for 1.5 seconds to show the animation
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Stop the animation and make the computer's choice
+      stopComputerSelection();
       const randomIndex = Math.floor(Math.random() * 3);
       const compId = compButtons[randomIndex].id;
       const compMove = moveMap[compId];
-
-      [...myButtons, ...compButtons].forEach(btn => btn.classList.remove("activeButton"));
-      myButtons[playerMoveIndex].classList.add("activeButton");
       compButtons[randomIndex].classList.add("activeButton");
 
       let result = "";
@@ -270,9 +348,12 @@
 
       document.getElementById("result").innerText = result;
       updateScore();
-
-      if (playerScore === 3) endGame("Player");
-      else if (compScore === 3) endGame("Computer");
+      
+      roundsPlayed++;
+      
+      if (roundsPlayed >= maxRounds) {
+        endGame();
+      }
     }
 
     for (let i = 0; i < myButtons.length; i++) {
@@ -280,7 +361,6 @@
         if (gameEnded) return;
         const playerId = myButtons[i].id;
         const playerMove = moveMap[playerId];
-        document.getElementById("result").innerText = "";
         playGame(i, playerMove);
       });
     }
