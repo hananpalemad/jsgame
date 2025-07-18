@@ -11,7 +11,7 @@
       text-align: center;
       margin: 0;
       padding: 20px;
-      background-color: #f8f8f8;
+      background: linear-gradient(to right, #f4e2d8, #ba5370);
     }
 
     h1 {
@@ -68,12 +68,6 @@
       color: #333;
     }
 
-    #timer {
-      font-size: 28px;
-      color: #e91e63;
-      margin-bottom: 10px;
-    }
-
     #scoreboard {
       font-size: 24px;
       margin-bottom: 20px;
@@ -83,6 +77,67 @@
       color: green;
       font-size: 28px;
       margin-top: 15px;
+    }
+
+    #resetBtn {
+      padding: 10px 25px;
+      font-size: 16px;
+      border: none;
+      border-radius: 25px;
+      background: linear-gradient(to right, #ff758c, #ff7eb3);
+      color: white;
+      cursor: pointer;
+      margin-top: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: transform 0.2s, background 0.3s;
+    }
+
+    #resetBtn:hover {
+      background: linear-gradient(to right, #ff7eb3, #ff758c);
+      transform: scale(1.05);
+    }
+
+    /* Custom Popup Styles */
+    #customPopup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #popupBox {
+      background: #fff;
+      color: #333;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      width: 80%;
+      max-width: 300px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+      animation: scaleUp 0.3s ease-in-out;
+    }
+
+    @keyframes scaleUp {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    #popupBox button {
+      padding: 10px 20px;
+      margin-top: 15px;
+      background-color: #ba5370;
+      border: none;
+      color: white;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
     }
 
     @media (max-width: 768px) {
@@ -122,87 +177,112 @@
   <h1>Stone Paper Scissors</h1>
 
   <div id="scoreboard">Player: 0 | Computer: 0</div>
-  <div id="timer"></div>
 
   <div class="button-container">
-    <button id="r" class="bu compButton"><i class="bi bi-circle-fill"></i></button>
-    <button id="p" class="bu compButton"><i class="bi bi-envelope-paper-fill"></i></button>
-    <button id="s" class="bu compButton"><i class="bi bi-scissors"></i></button>
+    <button id="r" class="bu compButton" title="Stone"><i class="bi bi-circle-fill"></i></button>
+    <button id="p" class="bu compButton" title="Paper"><i class="bi bi-envelope-paper-fill"></i></button>
+    <button id="s" class="bu compButton" title="Scissor"><i class="bi bi-scissors"></i></button>
   </div>
 
   <div class="button-container">
-    <button id="x" class="bu myButton"><i class="bi bi-circle-fill"></i></button>
-    <button id="y" class="bu myButton"><i class="bi bi-envelope-paper-fill"></i></button>
-    <button id="z" class="bu myButton"><i class="bi bi-scissors"></i></button>
+    <button id="x" class="bu myButton" title="Stone"><i class="bi bi-circle-fill"></i></button>
+    <button id="y" class="bu myButton" title="Paper"><i class="bi bi-envelope-paper-fill"></i></button>
+    <button id="z" class="bu myButton" title="Scissor"><i class="bi bi-scissors"></i></button>
   </div>
+
+  <button id="resetBtn" onclick="resetGame()">Reset</button>
 
   <h1 id="result"></h1>
   <h2 id="game-over"></h2>
 
+  <!-- Custom Popup -->
+  <div id="customPopup">
+    <div id="popupBox">
+      <p id="popupMessage"></p>
+      <button onclick="closePopup()">OK</button>
+    </div>
+  </div>
+
   <script>
-    const myButtons = document.getElementsByClassName("myButton"); 
+    const myButtons = document.getElementsByClassName("myButton");
     const compButtons = document.getElementsByClassName("compButton");
+    const moveMap = { x: "stone", y: "paper", z: "scissor", r: "stone", p: "paper", s: "scissor" };
     let playerScore = 0;
     let compScore = 0;
+    let gameEnded = false;
 
     function updateScore() {
-      document.getElementById("scoreboard").innerText = `Player: ${playerScore} | Computer: ${compScore}`;
+      const scoreEl = document.getElementById("scoreboard");
+      const playerColor = playerScore > compScore ? "green" : playerScore < compScore ? "red" : "black";
+      const compColor = playerColor === "green" ? "red" : playerColor === "red" ? "green" : "black";
+      scoreEl.innerHTML = `Player: <span style="color:${playerColor}">${playerScore}</span> | Computer: <span style="color:${compColor}">${compScore}</span>`;
     }
 
     function resetGame() {
       playerScore = 0;
       compScore = 0;
+      gameEnded = false;
       updateScore();
       document.getElementById("game-over").innerText = "";
       document.getElementById("result").innerText = "";
+      [...myButtons, ...compButtons].forEach(btn => btn.classList.remove("activeButton"));
     }
 
     function endGame(winner) {
-      document.getElementById("game-over").innerText = `${winner} won the Best of 5!`;
-      setTimeout(resetGame, 4000); // Auto reset after 4 seconds
+      gameEnded = true;
+      setTimeout(() => showPopup(`${winner} won the Best of 5!`), 100);
+    }
+
+    function showPopup(message) {
+      document.getElementById("popupMessage").innerText = message;
+      document.getElementById("customPopup").style.display = "flex";
+    }
+
+    function closePopup() {
+      document.getElementById("customPopup").style.display = "none";
+      resetGame();
+    }
+
+    function playGame(playerMoveIndex, playerMove) {
+      if (gameEnded) return;
+
+      const randomIndex = Math.floor(Math.random() * 3);
+      const compId = compButtons[randomIndex].id;
+      const compMove = moveMap[compId];
+
+      [...myButtons, ...compButtons].forEach(btn => btn.classList.remove("activeButton"));
+      myButtons[playerMoveIndex].classList.add("activeButton");
+      compButtons[randomIndex].classList.add("activeButton");
+
+      let result = "";
+      if (playerMove === compMove) {
+        result = "Draw";
+      } else if (
+        (playerMove === "stone" && compMove === "scissor") ||
+        (playerMove === "paper" && compMove === "stone") ||
+        (playerMove === "scissor" && compMove === "paper")
+      ) {
+        result = "You Win!";
+        playerScore++;
+      } else {
+        result = "You Lose!";
+        compScore++;
+      }
+
+      document.getElementById("result").innerText = result;
+      updateScore();
+
+      if (playerScore === 3) endGame("Player");
+      else if (compScore === 3) endGame("Computer");
     }
 
     for (let i = 0; i < myButtons.length; i++) {
       myButtons[i].addEventListener("click", function () {
-        // Clear previous highlights
-        for (let j = 0; j < myButtons.length; j++) {
-          myButtons[j].classList.remove("activeButton");
-        }
-        for (let j = 0; j < compButtons.length; j++) {
-          compButtons[j].classList.remove("activeButton");
-        }
-
-        myButtons[i].classList.add("activeButton");
-
+        if (gameEnded) return;
         const playerId = myButtons[i].id;
-        let playerMove = playerId === "x" ? "stone" : playerId === "y" ? "paper" : "scissor";
-
-        const randomIndex = Math.floor(Math.random() * 3);
-        compButtons[randomIndex].classList.add("activeButton");
-
-        const compId = compButtons[randomIndex].id;
-        let compMove = compId === "r" ? "stone" : compId === "p" ? "paper" : "scissor";
-
-        let result = "";
-        if (playerMove === compMove) {
-          result = "Draw";
-        } else if (
-          (playerMove === "stone" && compMove === "scissor") ||
-          (playerMove === "paper" && compMove === "stone") ||
-          (playerMove === "scissor" && compMove === "paper")
-        ) {
-          result = "You Win!";
-          playerScore++;
-        } else {
-          result = "You Lose!";
-          compScore++;
-        }
-
-        document.getElementById("result").innerText = result;
-        updateScore();
-
-        if (playerScore === 3) endGame("Player");
-        else if (compScore === 3) endGame("Computer");
+        const playerMove = moveMap[playerId];
+        document.getElementById("result").innerText = "";
+        playGame(i, playerMove);
       });
     }
   </script>
